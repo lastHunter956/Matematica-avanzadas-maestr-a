@@ -1,0 +1,23 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+*.pyc
+
+# Virtual environments
+.venv
+
+# entorno virtual
+.venv/
+
+# cache uv
+.uv-cache/
+
+# macOS basura
+.DS_Store
+._*
+
+
