@@ -18,6 +18,17 @@ Cada actividad del curso se guarda de forma independiente siguiendo esta lógica
   - Implementación de la serie de Taylor para $e^{x^2}$.
   - Estudio comparativo de precisión entre diferentes métodos algebraicos de expansión.
 
+### 2. Diferencias Finitas y Métodos Numéricos
+
+- **Archivo**: [`Series_finitas_actividad_2.ipynb`](Series_finitas_actividad_2.ipynb)
+- **Carpeta de Gráficas**: `diferencias_finitas_graficas/`
+- **Contenido**:
+  - Aproximación de $\cos(0.2)$ con polinomios de Taylor de 4to orden.
+  - Derivación y verificación de fórmulas de diferencias finitas para derivadas.
+  - Análisis del error de truncamiento $O(h^2)$ y $O(h)$ en esquemas forward y central.
+  - Estudio del error máximo en la derivada numérica de $\cos(x)$ para distintos $h$.
+  - Demostración de exactitud de la diferencia central para $f(x)=x^2$.
+
 ## 🚀 Instalación y Configuración (UV)
 
 El proyecto utiliza [**uv**](https://github.com/astral-sh/uv), una herramienta de nueva generación para gestionar entornos virtuales de Python de forma rápida y eficiente.
