@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulación Resorte-Masa · Euler vs Solución Exacta</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f3f5f8;--bg2:#ffffff;--bg3:#f8f9fb;--bdr:#dae0ea;--bdr2:#e5e9f0;
+  --tx1:#111827;--tx2:#475569;--tx3:#94a3b8;
+  --blue:#2563eb;--blue-d:#1d4ed8;--cyan:#0369a1;
+  --green:#059669;--green-bg:#ecfdf5;--green-bd:#a7f3d0;
+  --amber:#b45309;--amber-bg:#fffbeb;--amber-bd:#fde68a;
+  --red:#dc2626;--red-bg:#fef2f2;--red-bd:#fecaca;
+  --r:6px;--f:'IBM Plex Sans',-apple-system,sans-serif;--fm:'IBM Plex Mono','Consolas',monospace;
+}
+html{font-size:13px}
+body{font-family:var(--f);background:var(--bg);color:var(--tx1);line-height:1.4;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+.hdr{background:var(--bg2);border-bottom:1px solid var(--bdr);padding:6px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;height:40px}
+.hdr h1{font-size:.95rem;font-weight:700;display:flex;align-items:center;gap:5px}
+.hdr h1 b{color:var(--blue)}
+.hdr .sub{font-size:.65rem;color:var(--tx3);font-family:var(--fm)}
+.hdr-eq{font-family:var(--fm);font-size:.72rem;color:var(--tx2);background:var(--bg3);padding:3px 10px;border-radius:var(--r);border:1px solid var(--bdr2);white-space:nowrap}
+
+.app{display:grid;grid-template-columns:220px 1fr;height:calc(100vh - 40px)}
+
+/* Sidebar */
+.side{background:var(--bg2);border-right:1px solid var(--bdr);padding:8px 10px;overflow-y:auto}
+.st{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);margin:8px 0 3px;padding-bottom:2px;border-bottom:1px solid var(--bdr2)}
+.st:first-child{margin-top:0}
+.cr{margin-bottom:5px}
+.cr label{display:flex;justify-content:space-between;align-items:baseline;font-size:.7rem;font-weight:500;color:var(--tx2);margin-bottom:1px}
+.cr .vl{font-family:var(--fm);font-size:.7rem;font-weight:600;color:var(--blue)}
+.cr .un{font-size:.58rem;color:var(--tx3);font-family:var(--fm)}
+.cr input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:var(--bdr);outline:none;cursor:pointer}
+.cr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 0 0 1px var(--blue),0 1px 3px rgba(37,99,235,.25);cursor:pointer}
+.bg{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:6px}
+.bt{font-family:var(--f);font-size:.68rem;font-weight:600;padding:5px 6px;border:1px solid var(--bdr);border-radius:var(--r);cursor:pointer;background:var(--bg2);color:var(--tx1);display:flex;align-items:center;justify-content:center;gap:3px;transition:all .12s}
+.bt:hover{background:var(--bg);border-color:var(--blue)}
+.bt-p{background:var(--blue);border-color:var(--blue);color:#fff}
+.bt-p:hover{background:var(--blue-d)}
+.bt-f{grid-column:1/-1}
+.bt svg{width:11px;height:11px;fill:currentColor}
+
+/* Content — key change: sim gets ~60%, graphs ~40% minus bars */
+.cnt{display:grid;grid-template-rows:auto 1fr auto auto;overflow:hidden}
+
+.vbar{padding:4px 12px;display:flex;flex-wrap:wrap;gap:5px;background:var(--bg2);border-bottom:1px solid var(--bdr)}
+.vt{font-size:.63rem;font-weight:600;padding:2px 7px;border-radius:3px;display:flex;align-items:center;gap:3px}
+.vt.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd)}
+.vt.wn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd)}
+.vt.er{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)}
+.vd{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* SIM + METRICS — takes the bulk of space */
+.simrow{
+  display:grid;
+  grid-template-columns:300px 1fr;
+  background:var(--bg2);
+  border-bottom:1px solid var(--bdr);
+  min-height:0;
+}
+.scw{border-right:1px solid var(--bdr);background:var(--bg3);min-height:0}
+.scw canvas{display:block;width:100%;height:100%}
+
+/* Metrics — BIGGER */
+.mpan{padding:10px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-content:start}
+.mc{background:var(--bg3);border:1px solid var(--bdr2);border-radius:6px;padding:8px 12px}
+.mc .ml{font-size:.7rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em;font-weight:600;line-height:1.2;margin-bottom:2px}
+.mc .mv{font-family:var(--fm);font-size:1.15rem;font-weight:600;line-height:1.3}
+.ce{color:var(--blue)}.cn{color:var(--amber)}.cr2{color:var(--red)}.cg{color:var(--green)}.ci{color:var(--cyan)}
+
+/* GRAPHS — compact, fixed short height */
+.grows{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  background:var(--bg2);
+  height:180px;
+  min-height:140px;
+  max-height:220px;
+}
+.gp{border-right:1px solid var(--bdr);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.gp:last-child{border-right:none}
+.gh{padding:3px 8px;border-bottom:1px solid var(--bdr2);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--tx2);display:flex;align-items:center;gap:5px;background:var(--bg3);flex-shrink:0}
+.gh .lg{display:flex;gap:8px;margin-left:auto;font-weight:500;font-size:.55rem;color:var(--tx3)}
+.gh .li{display:flex;align-items:center;gap:2px}
+.gh .ld{width:6px;height:6px;border-radius:2px}
+.gp canvas{display:block;width:100%;flex:1;min-height:0}
+
+.tbar{padding:4px 12px;display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:.68rem;color:var(--tx2);background:var(--bg2);border-top:1px solid var(--bdr);flex-shrink:0}
+.tp{flex:1;height:2px;background:var(--bdr);border-radius:1px;overflow:hidden}
+.tpf{height:100%;background:var(--blue);border-radius:1px;transition:width 50ms linear}
+.ts{font-size:.62rem;font-weight:600;padding:1px 6px;border-radius:3px;background:var(--bg3);border:1px solid var(--bdr2)}
+
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{border-right:none;border-bottom:1px solid var(--bdr);max-height:180px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px;overflow-y:auto}
+  .grows{grid-template-columns:1fr;height:auto;max-height:none}
+  .gp{border-right:none;border-bottom:1px solid var(--bdr);height:120px}
+}
+@media(max-width:600px){
+  .side{grid-template-columns:1fr 1fr}
+  .simrow{grid-template-columns:1fr}.scw{border-right:none;border-bottom:1px solid var(--bdr)}
+  .mpan{grid-template-columns:repeat(2,1fr)}.hdr-eq{display:none}body{overflow:auto}
+}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div>
+    <h1><b>▸</b> Sistema Resorte-Masa sin Amortiguamiento</h1>
+    <div class="sub">Problema 2 · Validación Euler vs Solución Analítica</div>
+  </div>
+  <div class="hdr-eq">x'' + (k/m)x = 0 → ω² = k/m</div>
+</header>
+
+<div class="app">
+  <aside class="side">
+    <div>
+      <div class="st">Parámetros Físicos</div>
+      <div class="cr"><label>Masa (m) <span class="vl" id="v-m">2.00</span> <span class="un">kg</span></label><input type="range" id="c-m" min="0.5" max="10" step="0.1" value="2"></div>
+      <div class="cr"><label>Constante k <span class="vl" id="v-k">8.00</span> <span class="un">N/m</span></label><input type="range" id="c-k" min="1" max="50" step="0.5" value="8"></div>
+      <div class="cr"><label>Equilibrio s <span class="vl" id="v-s">0.00</span> <span class="un">m</span></label><input type="range" id="c-s" min="0" max="2" step="0.05" value="0"></div>
+    </div>
+    <div>
+      <div class="st">Condiciones Iniciales</div>
+      <div class="cr"><label>Posición x₀ <span class="vl" id="v-x0">1.00</span> <span class="un">m</span></label><input type="range" id="c-x0" min="-3" max="3" step="0.05" value="1"></div>
+      <div class="cr"><label>Velocidad v₀ <span class="vl" id="v-v0">0.00</span> <span class="un">m/s</span></label><input type="range" id="c-v0" min="-5" max="5" step="0.1" value="0"></div>
+      <div class="st">Método Numérico</div>
+      <div class="cr"><label>Paso h <span class="vl" id="v-h">0.050</span> <span class="un">s</span></label><input type="range" id="c-h" min="0.005" max="0.5" step="0.005" value="0.05"></div>
+      <div class="cr"><label>Tiempo total <span class="vl" id="v-tmax">20.0</span> <span class="un">s</span></label><input type="range" id="c-tmax" min="5" max="60" step="1" value="20"></div>
+    </div>
+    <div>
+      <div class="st">Control</div>
+      <div class="bg">
+        <button class="bt bt-p" id="btn-play"><svg viewBox="0 0 24 24"><polygon id="pico" points="6,4 20,12 6,20"/></svg><span id="plbl">Iniciar</span></button>
+        <button class="bt" id="btn-reset">↺ Reset</button>
+        <button class="bt" id="btn-step">▶| Paso</button>
+        <button class="bt" id="btn-ric">⟳ Reiniciar CI</button>
+        <button class="bt bt-f" id="btn-spd">Velocidad: 1×</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="cnt">
+    <div class="vbar" id="vbar">
+      <div class="vt ok"><div class="vd"></div>Solución exacta verificada</div>
+      <div class="vt wn"><div class="vd"></div>Euler muestra error acumulado</div>
+      <div class="vt ok"><div class="vd"></div>Energía conservada (exacta)</div>
+    </div>
+
+    <div class="simrow">
+      <div class="scw"><canvas id="cvs"></canvas></div>
+      <div class="mpan">
+        <div class="mc"><div class="ml">Tiempo</div><div class="mv ci" id="m-t">0.000 s</div></div>
+        <div class="mc"><div class="ml">Frecuencia ω</div><div class="mv ci" id="m-w">2.0000 rad/s</div></div>
+        <div class="mc"><div class="ml">Período T</div><div class="mv ci" id="m-T">3.1416 s</div></div>
+        <div class="mc"><div class="ml">x(t) Exacta</div><div class="mv ce" id="m-xe">1.0000 m</div></div>
+        <div class="mc"><div class="ml">x(t) Euler</div><div class="mv cn" id="m-xn">1.0000 m</div></div>
+        <div class="mc"><div class="ml">Error |Δx|</div><div class="mv cr2" id="m-er">0.000e+0</div></div>
+        <div class="mc"><div class="ml">v(t) Exacta</div><div class="mv ce" id="m-ve">0.0000 m/s</div></div>
+        <div class="mc"><div class="ml">E Exacta</div><div class="mv cg" id="m-Ee">4.0000 J</div></div>
+        <div class="mc"><div class="ml">E Euler</div><div class="mv cn" id="m-En">4.0000 J</div></div>
+      </div>
+    </div>
+
+    <div class="grows">
+      <div class="gp">
+        <div class="gh">Posición vs t<div class="lg"><span class="li"><span class="ld" style="background:#2563eb"></span>Exacta</span><span class="li"><span class="ld" style="background:#d97706"></span>Euler</span></div></div>
+        <canvas id="gPos"></canvas>
+      </div>
+      <div class="gp">
+        <div class="gh">Error Absoluto<div class="lg"><span class="li"><span class="ld" style="background:#dc2626"></span>|x_e − x_n|</span></div></div>
+        <canvas id="gErr"></canvas>
+      </div>
+      <div class="gp">
+        <div class="gh">Energía Mecánica<div class="lg"><span class="li"><span class="ld" style="background:#059669"></span>Exacta</span><span class="li"><span class="ld" style="background:#d97706"></span>Euler</span></div></div>
+        <canvas id="gEn"></canvas>
+      </div>
+    </div>
+
+    <div class="tbar">
+      <span id="tt">t = 0.000</span>
+      <div class="tp"><div class="tpf" id="tf"></div></div>
+      <span class="ts" id="ts">Detenido</span>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const C={m:$('c-m'),k:$('c-k'),s:$('c-s'),x0:$('c-x0'),v0:$('c-v0'),h:$('c-h'),tmax:$('c-tmax')};
+const V={m:$('v-m'),k:$('v-k'),s:$('v-s'),x0:$('v-x0'),v0:$('v-v0'),h:$('v-h'),tmax:$('v-tmax')};
+const M={t:$('m-t'),xe:$('m-xe'),xn:$('m-xn'),ve:$('m-ve'),er:$('m-er'),Ee:$('m-Ee'),En:$('m-En'),w:$('m-w'),T:$('m-T')};
+
+let P={},S={},run=false,spd=1;
+const spds=[1,2,4,.5];let si=0;
+let H={t:[],xe:[],xn:[],err:[],Ee:[],En:[]};
+let vis={xeDisp:0,xnDisp:0,veDisp:0};
+const TRAIL_LEN=12;let trailE=[],trailN=[];
+
+function rP(){
+  P.m=+C.m.value;P.k=+C.k.value;P.s=+C.s.value;
+  P.x0=+C.x0.value;P.v0=+C.v0.value;
+  P.h=+C.h.value;P.tmax=+C.tmax.value;
+  P.w=Math.sqrt(P.k/P.m);P.T=2*Math.PI/P.w;
+  P.A=Math.sqrt(P.x0**2+(P.v0/P.w)**2)||1;
+}
+function rS(){
+  rP();S.t=0;S.xn=P.x0;S.vn=P.v0;S.st=0;
+  H={t:[],xe:[],xn:[],err:[],Ee:[],En:[]};
+  vis.xeDisp=P.x0;vis.xnDisp=P.x0;vis.veDisp=P.v0;
+  trailE=[];trailN=[];rec();uUI();
+}
+
+const eX=t=>P.x0*Math.cos(P.w*t)+(P.v0/P.w)*Math.sin(P.w*t);
+const eV=t=>-P.x0*P.w*Math.sin(P.w*t)+P.v0*Math.cos(P.w*t);
+const Ef=(x,v)=>.5*P.k*x*x+.5*P.m*v*v;
+
+function euler(){
+  const w2=P.w*P.w,x=S.xn,v=S.vn;
+  S.xn=x+P.h*v;S.vn=v-P.h*w2*x;S.t+=P.h;S.st++;
+}
+function rec(){
+  const xe=eX(S.t),ve=eV(S.t),er=Math.abs(xe-S.xn);
+  H.t.push(S.t);H.xe.push(xe);H.xn.push(S.xn);
+  H.err.push(er);H.Ee.push(Ef(xe,ve));H.En.push(Ef(S.xn,S.vn));
+}
+
+function iC(c){
+  const r=c.getBoundingClientRect(),d=devicePixelRatio||1;
+  c.width=r.width*d;c.height=r.height*d;
+  const x=c.getContext('2d');x.scale(d,d);return{x,w:r.width,h:r.height};
+}
+
+/* ═══ REALISTIC HELIX SPRING ═══ */
+function drawHelixSpring(ctx,cx,y1,y2,color,wireWidth){
+  const COILS=11,radius=16;
+  const springLen=y2-y1;
+  if(springLen<10)return;
+  const leadIn=8;
+  const coilStart=y1+leadIn,coilEnd=y2-leadIn;
+  const coilLen=coilEnd-coilStart;
+  if(coilLen<5)return;
+  const resolution=COILS*24;
+
+  ctx.save();
+  ctx.strokeStyle=color;ctx.lineWidth=wireWidth*0.7;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(cx,y1);ctx.lineTo(cx,coilStart);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,coilEnd);ctx.lineTo(cx,y2);ctx.stroke();
+
+  const points=[];
+  for(let i=0;i<=resolution;i++){
+    const frac=i/resolution;
+    const theta=frac*COILS*2*Math.PI;
+    const py=coilStart+frac*coilLen;
+    const px=cx+radius*Math.cos(theta);
+    const z=Math.sin(theta);
+    points.push({x:px,y:py,z});
+  }
+
+  for(let pass=0;pass<2;pass++){
+    ctx.beginPath();let drawing=false;
+    for(let i=0;i<points.length;i++){
+      const p=points[i];
+      const isBack=p.z<0;
+      if(pass===0&&!isBack){drawing=false;continue;}
+      if(pass===1&&isBack){drawing=false;continue;}
+      if(!drawing){
+        ctx.stroke();ctx.beginPath();ctx.moveTo(p.x,p.y);drawing=true;
+        if(pass===0){ctx.strokeStyle=color;ctx.globalAlpha=0.25;ctx.lineWidth=wireWidth*0.6;}
+        else{ctx.strokeStyle=color;ctx.globalAlpha=0.9;ctx.lineWidth=wireWidth;}
+      }else{ctx.lineTo(p.x,p.y);}
+    }
+    ctx.stroke();
+  }
+
+  ctx.globalAlpha=0.3;ctx.strokeStyle='#ffffff';ctx.lineWidth=wireWidth*0.3;
+  ctx.beginPath();let hl=false;
+  for(let i=0;i<points.length;i++){
+    const p=points[i];
+    if(p.z>0.7){if(!hl){ctx.moveTo(p.x,p.y);hl=true;}else ctx.lineTo(p.x,p.y);}
+    else{if(hl){ctx.stroke();ctx.beginPath();hl=false;}}
+  }
+  ctx.stroke();ctx.restore();
+}
+
+function drawMassBlock(ctx,cx,cy,size,color,darkColor,label){
+  ctx.save();
+  const s=size,r=5;
+  ctx.shadowColor='rgba(0,0,0,0.15)';ctx.shadowBlur=10;ctx.shadowOffsetX=2;ctx.shadowOffsetY=4;
+  const grad=ctx.createLinearGradient(cx-s,cy-s,cx+s,cy+s);
+  grad.addColorStop(0,color);grad.addColorStop(1,darkColor);
+  ctx.fillStyle=grad;ctx.beginPath();ctx.roundRect(cx-s,cy-s,s*2,s*2,r);ctx.fill();
+  ctx.shadowColor='transparent';ctx.strokeStyle=darkColor;ctx.lineWidth=1.2;ctx.stroke();
+  ctx.globalAlpha=0.2;ctx.fillStyle='#ffffff';
+  ctx.beginPath();ctx.roundRect(cx-s+2,cy-s+1,s*2-4,s*0.6,[r,r,0,0]);ctx.fill();
+  ctx.globalAlpha=1;ctx.fillStyle='#ffffff';
+  ctx.font=`bold ${Math.round(size*0.65)}px IBM Plex Sans, sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,cx,cy+1);
+  ctx.restore();
+}
+
+function drawVelocityArrow(ctx,x,y,length,color){
+  if(Math.abs(length)<2)return;
+  const len=Math.max(-40,Math.min(40,length));
+  ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.globalAlpha=0.6;
+  ctx.lineWidth=1.5;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+len);ctx.stroke();
+  const dir=Math.sign(len),hs=4;
+  ctx.beginPath();ctx.moveTo(x,y+len);ctx.lineTo(x-hs,y+len-dir*hs*1.5);ctx.lineTo(x+hs,y+len-dir*hs*1.5);ctx.closePath();ctx.fill();
+  ctx.globalAlpha=0.5;ctx.font='7px IBM Plex Mono';ctx.textAlign='left';ctx.fillText('v',x+5,y+len/2+3);
+  ctx.restore();
+}
+
+function dSim(){
+  const{x:ctx,w,h}=iC($('cvs'));
+  const topY=30,botY=h-24,range=botY-topY,rest=topY+range*.32;
+  const mx=Math.max(P.A,0.8),sc=range*.24/mx;
+  const massSize = 18;
+  const xe = vis.xeDisp, xn = vis.xnDisp;
+  const cn = Math.max(-mx * 10, Math.min(mx * 10, xn)); // Increased range for Euler to prevent extreme divergence issues but allow clipping
+  const yE = rest + xe * sc;
+  const yN = rest + cn * sc;
+  const col1 = w * 0.35, col2 = w * 0.65;
+
+  ctx.fillStyle = '#f8f9fb'; ctx.fillRect(0, 0, w, h);
+
+  // Equilibrium
+  ctx.strokeStyle = '#cdd5e0'; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(20, rest); ctx.lineTo(w - 20, rest); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#94a3b8'; ctx.font = '9px IBM Plex Mono'; ctx.textAlign = 'left'; ctx.fillText('equilibrio', 22, rest - 5);
+
+  // Support beam
+  const bL = col1 - 35, bR = col2 + 35;
+  const bg = ctx.createLinearGradient(0, topY - 7, 0, topY);
+  bg.addColorStop(0, '#b0b8c8'); bg.addColorStop(1, '#7d8a9e');
+  ctx.fillStyle = bg; ctx.fillRect(bL, topY - 7, bR - bL, 7);
+  ctx.strokeStyle = '#6b7a90'; ctx.lineWidth = 1;
+  const hc = Math.floor((bR - bL) / 12);
+  for (let i = 0; i <= hc; i++) { const hx = bL + i * 12; ctx.beginPath(); ctx.moveTo(hx, topY - 7); ctx.lineTo(hx - 7, topY - 15); ctx.stroke(); }
+
+  // Motion trails
+  for (let i = 0; i < trailE.length; i++) {
+    const a = (i + 1) / trailE.length * 0.12;
+    const ty = rest + trailE[i] * sc;
+    ctx.globalAlpha = a; ctx.fillStyle = '#2563eb';
+    ctx.beginPath(); ctx.roundRect(col1 - massSize * .6, ty - massSize * .6, massSize * 1.2, massSize * 1.2, 3); ctx.fill();
+  }
+  for (let i = 0; i < trailN.length; i++) {
+    const a = (i + 1) / trailN.length * 0.1;
+    const cv = Math.max(-mx * 10, Math.min(mx * 10, trailN[i]));
+    const ty = rest + cv * sc;
+    ctx.globalAlpha = a; ctx.fillStyle = '#d97706';
+    ctx.beginPath(); ctx.roundRect(col2 - massSize * .6, ty - massSize * .6, massSize * 1.2, massSize * 1.2, 3); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // Springs
+  drawHelixSpring(ctx,col1,topY,yE-massSize,'#2563eb',2.4);
+  drawHelixSpring(ctx,col2,topY,yN-massSize,'#d97706',2.2);
+
+  // Masses
+  drawMassBlock(ctx,col1,yE,massSize,'#3b82f6','#1e40af','Exacta');
+  drawMassBlock(ctx,col2,yN,massSize,'#f59e0b','#92400e','Euler');
+
+  // Velocity arrows
+  const arrowSc = sc * 0.5;
+  drawVelocityArrow(ctx, col1 + massSize + 10, yE, vis.veDisp * arrowSc, '#2563eb');
+  const vnC = Math.max(-mx * 10, Math.min(mx * 10, S.vn));
+  drawVelocityArrow(ctx, col2 + massSize + 10, yN, vnC * arrowSc, '#d97706');
+
+  // Position labels
+  ctx.fillStyle = '#64748b'; ctx.font = '9px IBM Plex Mono'; ctx.textAlign = 'center';
+  ctx.fillText('x = ' + xe.toFixed(3) + ' m', col1, h - 6);
+  ctx.fillText('x = ' + cn.toFixed(3) + ' m', col2, h - 6);
+
+  // Column labels
+  ctx.fillStyle='#475569';ctx.font='bold 9px IBM Plex Sans';
+  ctx.fillText('SOL. EXACTA',col1,topY-20);
+  ctx.fillStyle='#92400e';ctx.fillText('EULER',col2,topY-20);
+}
+
+/* ═══ GRAPHS ═══ */
+function dG(cvs,ds){
+  const{x:ctx,w,h}=iC(cvs);
+  const p={l:38,r:8,t:4,b:14},gw=w-p.l-p.r,gh=h-p.t-p.b;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,w,h);
+  if(H.t.length<2){ctx.fillStyle='#94a3b8';ctx.font='9px IBM Plex Sans';ctx.textAlign='center';ctx.fillText('Esperando datos…',w/2,h/2);return;}
+  let yMn=Infinity,yMx=-Infinity;
+  for(const d of ds)for(const v of d.d){if(v<yMn)yMn=v;if(v>yMx)yMx=v;}
+  if(yMn===yMx){yMn-=1;yMx+=1;}
+  const yP=(yMx-yMn)*.08||.5;yMn-=yP;yMx+=yP;
+  const sx=v=>p.l+(v/P.tmax)*gw;
+  const sy=v=>p.t+(1-(v-yMn)/(yMx-yMn))*gh;
+  ctx.strokeStyle='#e8ecf0';ctx.lineWidth=.8;
+  for(let i=0;i<=3;i++){const y=p.t+gh*i/3;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(p.l+gw,y);ctx.stroke();}
+  if(yMn<0&&yMx>0){ctx.strokeStyle='#cbd5e1';ctx.setLineDash([2,2]);const zy=sy(0);ctx.beginPath();ctx.moveTo(p.l,zy);ctx.lineTo(p.l+gw,zy);ctx.stroke();ctx.setLineDash([]);}
+  for(const d of ds){
+    ctx.strokeStyle=d.c;ctx.lineWidth=d.w||1.4;ctx.globalAlpha=d.a||1;ctx.beginPath();
+    for(let i=0;i<H.t.length;i++){const px=sx(H.t[i]),py=sy(d.d[i]);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+    ctx.stroke();ctx.globalAlpha=1;
+  }
+  ctx.fillStyle='#94a3b8';ctx.font='8px IBM Plex Mono';ctx.textAlign='right';
+  for(let i=0;i<=3;i++){const v=yMx-(yMx-yMn)*i/3;ctx.fillText(v.toFixed(1),p.l-3,p.t+gh*i/3+3);}
+  ctx.textAlign='center';
+  for(let i=0;i<=4;i++){const v=P.tmax*i/4;ctx.fillText(v.toFixed(0)+'s',sx(v),h-2);}
+}
+function rG(){
+  dG($('gPos'),[{d:H.xe,c:'#2563eb',w:1.6},{d:H.xn,c:'#d97706',w:1.2,a:.8}]);
+  dG($('gErr'),[{d:H.err,c:'#dc2626',w:1.4}]);
+  dG($('gEn'),[{d:H.Ee,c:'#059669',w:1.6},{d:H.En,c:'#d97706',w:1.2,a:.8}]);
+}
+
+/* ═══ UI UPDATE ═══ */
+function uUI(){
+  const xe=eX(S.t),ve=eV(S.t),er=Math.abs(xe-S.xn),Ee=Ef(xe,ve),Enu=Ef(S.xn,S.vn);
+  M.t.textContent=S.t.toFixed(3)+' s';
+  M.xe.textContent=xe.toFixed(4)+' m';M.xn.textContent=S.xn.toFixed(4)+' m';
+  M.ve.textContent=ve.toFixed(4)+' m/s';M.er.textContent=er.toExponential(3);
+  M.Ee.textContent=Ee.toFixed(4)+' J';M.En.textContent=Enu.toFixed(4)+' J';
+  M.w.textContent=P.w.toFixed(4)+' rad/s';M.T.textContent=P.T.toFixed(4)+' s';
+  $('tt').textContent='t = '+S.t.toFixed(3);
+  $('tf').style.width=(S.t/P.tmax*100)+'%';
+
+  const E0=Ef(P.x0,P.v0),dE=Math.abs(Enu-E0)/(E0||1);
+  let h='<div class="vt ok"><div class="vd"></div>Solución exacta verificada</div>';
+  if(er<.01)h+='<div class="vt ok"><div class="vd"></div>Euler preciso (|Δx| &lt; 0.01)</div>';
+  else if(er<1)h+='<div class="vt wn"><div class="vd"></div>Euler: error = '+er.toFixed(4)+'</div>';
+  else h+='<div class="vt er"><div class="vd"></div>Euler diverge: error = '+er.toFixed(2)+'</div>';
+  if(dE<.01)h+='<div class="vt ok"><div class="vd"></div>Energía conservada (ambos)</div>';
+  else h+='<div class="vt wn"><div class="vd"></div>Energía Euler Δ='+(dE*100).toFixed(1)+'%</div>';
+  $('vbar').innerHTML=h;
+}
+
+/* ═══ LOOP ═══ */
+let lf=0,ac=0,fc=0;
+function loop(ts){
+  if(!run)return;
+  if(!lf)lf=ts;
+  const dt=Math.min((ts-lf)/1000,.05)*spd;lf=ts;ac+=dt;
+  let stepped=false;
+  while(ac>=P.h&&S.t<P.tmax){euler();rec();stepped=true;ac-=P.h;}
+  if(stepped)uUI();
+
+  const lp=0.25;
+  vis.xeDisp+=(eX(S.t)-vis.xeDisp)*lp;
+  vis.xnDisp+=(S.xn-vis.xnDisp)*lp;
+  vis.veDisp+=(eV(S.t)-vis.veDisp)*lp;
+
+  fc++;
+  if(fc%3===0){
+    trailE.push(vis.xeDisp);trailN.push(vis.xnDisp);
+    if(trailE.length>TRAIL_LEN)trailE.shift();
+    if(trailN.length>TRAIL_LEN)trailN.shift();
+  }
+
+  dSim();rG();
+  if(S.t>=P.tmax){vis.xeDisp=eX(S.t);vis.xnDisp=S.xn;dSim();run=false;$('plbl').textContent='Iniciar';$('ts').textContent='Finalizado';return;}
+  requestAnimationFrame(loop);
+}
+
+/* ═══ EVENTS ═══ */
+Object.keys(C).forEach(k=>{
+  C[k].addEventListener('input',()=>{const v=+C[k].value;V[k].textContent=k==='h'?v.toFixed(3):k==='tmax'?v.toFixed(1):v.toFixed(2);});
+});
+$('btn-play').onclick=()=>{
+  if(S.t>=P.tmax)rS();run=!run;
+  $('plbl').textContent=run?'Pausa':'Reanudar';
+  $('pico').setAttribute('points',run?'6,4 10,4 10,20 6,20 14,4 18,4 18,20 14,20':'6,4 20,12 6,20');
+  $('ts').textContent=run?'Simulando…':'Pausado';
+  if(run){lf=0;ac=0;requestAnimationFrame(loop);}
+};
+$('btn-reset').onclick=()=>{run=false;$('plbl').textContent='Iniciar';$('pico').setAttribute('points','6,4 20,12 6,20');$('ts').textContent='Detenido';rS();dSim();rG();};
+$('btn-step').onclick=()=>{if(run||S.t>=P.tmax)return;rP();euler();rec();uUI();vis.xeDisp=eX(S.t);vis.xnDisp=S.xn;vis.veDisp=eV(S.t);dSim();rG();$('ts').textContent='Paso '+S.st;};
+$('btn-ric').onclick=()=>{run=false;$('plbl').textContent='Iniciar';$('pico').setAttribute('points','6,4 20,12 6,20');$('ts').textContent='Detenido';rS();dSim();rG();};
+$('btn-spd').onclick=()=>{si=(si+1)%spds.length;spd=spds[si];$('btn-spd').textContent='Velocidad: '+spd+'×';};
+window.addEventListener('resize',()=>{dSim();rG();});
+
+rS();dSim();rG();
+</script>
+</body>
+</html>
