@@ -67,10 +67,22 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx1);line-height:1.4;
 .scw canvas{display:block;width:100%;height:100%}
 
 /* Metrics — BIGGER */
-.mpan{padding:10px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-content:start}
-.mc{background:var(--bg3);border:1px solid var(--bdr2);border-radius:6px;padding:8px 12px}
+.mpan{padding:10px 12px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;flex-shrink:0}
+.mc {background:var(--bg3);border:1px solid var(--bdr2);border-radius:6px;padding:8px 12px}
 .mc .ml{font-size:.7rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.04em;font-weight:600;line-height:1.2;margin-bottom:2px}
 .mc .mv{font-family:var(--fm);font-size:1.15rem;font-weight:600;line-height:1.3}
+
+/* Validation Table */
+.tw{flex:1;overflow:auto;border:1px solid var(--bdr);border-radius:var(--r);background:var(--bg2);min-height:100px}
+.tab{width:100%;border-collapse:collapse;font-size:.65rem;font-family:var(--fm)}
+.tab thead{position:sticky;top:0;background:var(--bg3);z-index:1}
+.tab th{padding:4px 6px;text-align:right;border-bottom:1px solid var(--bdr);color:var(--tx2);font-weight:700;text-transform:uppercase}
+.tab td{padding:3px 6px;text-align:right;border-bottom:1px solid var(--bdr2);color:var(--tx2)}
+.tab tr:hover{background:var(--bg3)}
+.tab .th-t{text-align:left}
+.tab .td-t{text-align:left;color:var(--tx3)}
+.tab .err-val{color:var(--red);font-weight:600}
 .ce{color:var(--blue)}.cn{color:var(--amber)}.cr2{color:var(--red)}.cg{color:var(--green)}.ci{color:var(--cyan)}
 
 /* GRAPHS — compact, fixed short height */
@@ -145,6 +157,18 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx1);line-height:1.4;
         <button class="bt bt-f" id="btn-spd">Velocidad: 1×</button>
       </div>
     </div>
+    <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed var(--bdr); font-size: 0.62rem; color: var(--tx2); line-height: 1.3;">
+      <div class="st" style="border:none; margin-bottom: 4px;">Información del Proyecto</div>
+      <b style="color:var(--tx1)">Asignatura:</b> MATEMATICAS AVANZADAS PARA INGENIERIA-1048-202650<br>
+      <b style="color:var(--tx1)">Docente:</b> Enrique Pereira<br>
+      <b style="color:var(--tx1)">Semestre:</b> 2026-1 | Marzo 2026<br>
+      <div style="margin-top: 6px; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: 0.03em;">Autores:</div>
+      <div style="margin-top: 2px;">
+        • José de Jesús Caro Urueta - T00061673<br>
+        • Oscar Daniel Oviedo Tapia - T00040953<br>
+        • Jesús Antonio Martinez Velandia - T00061258
+      </div>
+    </div>
   </aside>
 
   <div class="cnt">
@@ -157,15 +181,35 @@ body{font-family:var(--f);background:var(--bg);color:var(--tx1);line-height:1.4;
     <div class="simrow">
       <div class="scw"><canvas id="cvs"></canvas></div>
       <div class="mpan">
-        <div class="mc"><div class="ml">Tiempo</div><div class="mv ci" id="m-t">0.000 s</div></div>
-        <div class="mc"><div class="ml">Frecuencia ω</div><div class="mv ci" id="m-w">2.0000 rad/s</div></div>
-        <div class="mc"><div class="ml">Período T</div><div class="mv ci" id="m-T">3.1416 s</div></div>
-        <div class="mc"><div class="ml">x(t) Exacta</div><div class="mv ce" id="m-xe">1.0000 m</div></div>
-        <div class="mc"><div class="ml">x(t) Euler</div><div class="mv cn" id="m-xn">1.0000 m</div></div>
-        <div class="mc"><div class="ml">Error |Δx|</div><div class="mv cr2" id="m-er">0.000e+0</div></div>
-        <div class="mc"><div class="ml">v(t) Exacta</div><div class="mv ce" id="m-ve">0.0000 m/s</div></div>
-        <div class="mc"><div class="ml">E Exacta</div><div class="mv cg" id="m-Ee">4.0000 J</div></div>
-        <div class="mc"><div class="ml">E Euler</div><div class="mv cn" id="m-En">4.0000 J</div></div>
+        <div class="mgrid">
+          <div class="mc"><div class="ml">Tiempo</div><div class="mv ci" id="m-t">0.000 s</div></div>
+          <div class="mc"><div class="ml">Frecuencia ω</div><div class="mv ci" id="m-w">2.0000 rad/s</div></div>
+          <div class="mc"><div class="ml">Período T</div><div class="mv ci" id="m-T">3.1416 s</div></div>
+          <div class="mc"><div class="ml">x(t) Exacta</div><div class="mv ce" id="m-xe">1.0000 m</div></div>
+          <div class="mc"><div class="ml">x(t) Euler</div><div class="mv cn" id="m-xn">1.0000 m</div></div>
+          <div class="mc"><div class="ml">Error |Δx|</div><div class="mv cr2" id="m-er">0.000e+0</div></div>
+          <div class="mc"><div class="ml">v(t) Exacta</div><div class="mv ce" id="m-ve">0.0000 m/s</div></div>
+          <div class="mc"><div class="ml">E Exacta</div><div class="mv cg" id="m-Ee">4.0000 J</div></div>
+          <div class="mc"><div class="ml">E Euler</div><div class="mv cn" id="m-En">4.0000 J</div></div>
+        </div>
+        <div class="tw" id="t-wrap">
+          <table class="tab">
+            <thead>
+              <tr>
+                <th class="th-t">t_s</th>
+                <th>ω</th>
+                <th>T</th>
+                <th>x_ex</th>
+                <th>x_eu</th>
+                <th>|Δx|</th>
+                <th>v_ex</th>
+                <th>E_ex</th>
+                <th>E_eu</th>
+              </tr>
+            </thead>
+            <tbody id="t-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -201,7 +245,7 @@ const M={t:$('m-t'),xe:$('m-xe'),xn:$('m-xn'),ve:$('m-ve'),er:$('m-er'),Ee:$('m-
 
 let P={},S={},run=false,spd=1;
 const spds=[1,2,4,.5];let si=0;
-let H={t:[],xe:[],xn:[],err:[],Ee:[],En:[]};
+let H={t:[],xe:[],xn:[],xm:[],ve:[],err:[],Ee:[],En:[]};
 let vis={xeDisp:0,xnDisp:0,veDisp:0};
 const TRAIL_LEN=12;let trailE=[],trailN=[];
 
@@ -213,10 +257,12 @@ function rP(){
   P.A=Math.sqrt(P.x0**2+(P.v0/P.w)**2)||1;
 }
 function rS(){
-  rP();S.t=0;S.xn=P.x0;S.vn=P.v0;S.st=0;
-  H={t:[],xe:[],xn:[],err:[],Ee:[],En:[]};
+  rP();S.t=0;S.xn=P.x0;S.vn=P.v0;S.xm=P.x0;S.vm=P.v0;S.st=0;
+  H={t:[],xe:[],xn:[],xm:[],ve:[],err:[],Ee:[],En:[]};
   vis.xeDisp=P.x0;vis.xnDisp=P.x0;vis.veDisp=P.v0;
-  trailE=[];trailN=[];rec();uUI();
+  trailE=[];trailN=[];
+  $('t-body').innerHTML='';
+  rec();uUI();uTable();
 }
 
 const eX=t=>P.x0*Math.cos(P.w*t)+(P.v0/P.w)*Math.sin(P.w*t);
@@ -224,13 +270,39 @@ const eV=t=>-P.x0*P.w*Math.sin(P.w*t)+P.v0*Math.cos(P.w*t);
 const Ef=(x,v)=>.5*P.k*x*x+.5*P.m*v*v;
 
 function euler(){
-  const w2=P.w*P.w,x=S.xn,v=S.vn;
-  S.xn=x+P.h*v;S.vn=v-P.h*w2*x;S.t+=P.h;S.st++;
+  const w2=P.w*P.w,h=P.h;
+  // Escalar
+  const x=S.xn,v=S.vn;
+  S.xn=x+h*v;S.vn=v-h*w2*x;
+  // Matricial: u_n+1 = [[1, h], [-h*w2, 1]] * u_n
+  const xm=S.xm,vm=S.vm;
+  S.xm=1.0*xm+h*vm;
+  S.vm=-h*w2*xm+1.0*vm;
+  
+  S.t+=h;S.st++;
 }
 function rec(){
   const xe=eX(S.t),ve=eV(S.t),er=Math.abs(xe-S.xn);
-  H.t.push(S.t);H.xe.push(xe);H.xn.push(S.xn);
-  H.err.push(er);H.Ee.push(Ef(xe,ve));H.En.push(Ef(S.xn,S.vn));
+  H.t.push(S.t);H.xe.push(xe);H.xn.push(S.xn);H.xm.push(S.xm);
+  H.ve.push(ve);H.err.push(er);H.Ee.push(Ef(xe,ve));H.En.push(Ef(S.xn,S.vn));
+}
+
+function uTable(){
+  const b=$('t-body'),tw=$('t-wrap');
+  const i=H.t.length-1;
+  if(i<0)return;
+  const r=document.createElement('tr');
+  r.innerHTML=`<td class="td-t">${H.t[i].toFixed(2)}</td>
+    <td>${P.w.toFixed(4)}</td>
+    <td>${P.T.toFixed(4)}</td>
+    <td>${H.xe[i].toFixed(4)}</td>
+    <td>${H.xn[i].toFixed(4)}</td>
+    <td class="err-val">${H.err[i].toExponential(3)}</td>
+    <td>${H.ve[i].toFixed(4)}</td>
+    <td>${H.Ee[i].toFixed(4)}</td>
+    <td>${H.En[i].toFixed(4)}</td>`;
+  b.appendChild(r);
+  tw.scrollTop=tw.scrollHeight;
 }
 
 function iC(c){
@@ -447,7 +519,7 @@ function loop(ts){
   const dt=Math.min((ts-lf)/1000,.05)*spd;lf=ts;ac+=dt;
   let stepped=false;
   while(ac>=P.h&&S.t<P.tmax){euler();rec();stepped=true;ac-=P.h;}
-  if(stepped)uUI();
+  if(stepped){uUI();uTable();}
 
   const lp=0.25;
   vis.xeDisp+=(eX(S.t)-vis.xeDisp)*lp;
@@ -478,7 +550,7 @@ $('btn-play').onclick=()=>{
   if(run){lf=0;ac=0;requestAnimationFrame(loop);}
 };
 $('btn-reset').onclick=()=>{run=false;$('plbl').textContent='Iniciar';$('pico').setAttribute('points','6,4 20,12 6,20');$('ts').textContent='Detenido';rS();dSim();rG();};
-$('btn-step').onclick=()=>{if(run||S.t>=P.tmax)return;rP();euler();rec();uUI();vis.xeDisp=eX(S.t);vis.xnDisp=S.xn;vis.veDisp=eV(S.t);dSim();rG();$('ts').textContent='Paso '+S.st;};
+$('btn-step').onclick=()=>{if(run||S.t>=P.tmax)return;rP();euler();rec();uUI();uTable();vis.xeDisp=eX(S.t);vis.xnDisp=S.xn;vis.veDisp=eV(S.t);dSim();rG();$('ts').textContent='Paso '+S.st;};
 $('btn-ric').onclick=()=>{run=false;$('plbl').textContent='Iniciar';$('pico').setAttribute('points','6,4 20,12 6,20');$('ts').textContent='Detenido';rS();dSim();rG();};
 $('btn-spd').onclick=()=>{si=(si+1)%spds.length;spd=spds[si];$('btn-spd').textContent='Velocidad: '+spd+'×';};
 window.addEventListener('resize',()=>{dSim();rG();});
